@@ -1,5 +1,6 @@
 package com.example.security_example.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -17,22 +18,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
-
-    @Bean
-    public CustomUserDetailsService customUserDetailsService() {
-        // 여기에서 CustomUserDetailsService를 구현해야 합니다.
-        return new CustomUserDetailsService();
-    }
-
-    protected void configure(AuthenticationManagerBuilder auth, CustomUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) throws Exception {
-        auth
-                .userDetailsService(userDetailsService)
-                .passwordEncoder(passwordEncoder);
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,9 +28,11 @@ public class WebSecurityConfig {
                 )
                 .formLogin((form) -> form
                         .loginPage("/login")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
                         .permitAll()
-                        .successHandler(new CustomAuthenticationSuccessHandler())
-                        .failureHandler(new CustomAuthenticationFailureHandler())
+//                        .successHandler(new CustomAuthenticationSuccessHandler())
+//                        .failureHandler(new CustomAuthenticationFailureHandler())
                 )
                 .logout((logout) -> logout
                         .permitAll()
@@ -54,15 +41,16 @@ public class WebSecurityConfig {
         return http.build();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails user =
-                User.withDefaultPasswordEncoder()
-                        .username("user")
-                        .password("password")
-                        .roles("USER")
-                        .build();
 
-        return new InMemoryUserDetailsManager(user);
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        // return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        return mySqlPasswordEncoder();
     }
+
+    public MySqlPasswordEncoder mySqlPasswordEncoder(){
+        MySqlPasswordEncoder encoder = new MySqlPasswordEncoder();
+        return encoder;
+    }
+
 }
